@@ -1,0 +1,24 @@
+---
+title: "Análise Exploratória"
+subtitle: "Data Hackerz e Kaggle"
+author: "Anderson Neisse <br> Rodrigo Oliveira"
+institute: "DataSciMT"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+---
+# Obtenção dos dados
+
+
+
