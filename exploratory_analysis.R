@@ -3,11 +3,21 @@ library(tidyverse)
 
 
 # Reading the data
-df_dh <- read_csv("survey data hackers/datahackers-survey-2019-anonymous-responses.csv")
+df_dh <- read_csv(
+  file = "survey_data-hackers/datahackers-survey-2019-anonymous-responses.csv"
+)
 
-cols <- read_lines("survey kaggle/kaggle_survey_2020_responses.csv", n_max = 1) %>% str_split(",", simplify = T)
-df_kg <- read_csv("survey kaggle/kaggle_survey_2020_responses.csv", skip = 2, col_names = cols)
+cols <- read_lines(
+  file = "survey_kaggle/kaggle_survey_2020_responses.csv", 
+  n_max = 1
+  ) %>% 
+  str_split(",", simplify = T)
 
+df_kg <- read_csv(
+  file = "survey_kaggle/kaggle_survey_2020_responses.csv", 
+  skip = 2, 
+  col_names = cols
+)
 
 # Quantidade de respondentes
 nrow(df_dh)

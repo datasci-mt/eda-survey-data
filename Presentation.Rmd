@@ -16,6 +16,15 @@ output:
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
 source('src.R')
+
+df_data_hackers <- get_survey_data_from_data_hackerz(
+  file_path = 'survey_data-hackers/datahackers-survey-2019-anonymous-responses.csv'
+)
+
+df_kaggle <- get_survey_data_from_kaggle(
+  file_path = 'survey_kaggle/kaggle_survey_2020_responses.csv'
+)
+
 ```
 
 ---
@@ -24,7 +33,7 @@ source('src.R')
 * Pesquisa Data Hackerz e Kaggle
 * Apresentação dos resultados
   - Quantidade de respondentes
-  - Role
+  - Cargo
   - Salário
   - Nível de formação
   - Idade
@@ -37,13 +46,6 @@ source('src.R')
 # Quantidade de respondentes
 
 ```{r qtd_respondentes, echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, dpi=500, paged.print=FALSE}
-df_data_hackers <- get_survey_data_from_data_hackerz(
-  file_path = 'survey_data-hackers/datahackers-survey-2019-anonymous-responses.csv'
-)
-
-df_kaggle <- get_survey_data_from_kaggle(
-  file_path = 'survey_kaggle/kaggle_survey_2020_responses.csv'
-)
 
 tibble(
   pesquisa = c('Data Hackerz', 'Kaggle'),
@@ -66,6 +68,42 @@ tibble(
   
 
 ```
+
+---
+# Cargo
+
+```{r cargo, echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, dpi=500, paged.print=FALSE}
+
+get_role_bind_data(df_data_hackers, df_kaggle) %>% 
+  ggplot() + 
+  geom_col(
+    aes(
+      x = reorder(Role, Proportion), 
+      y = Proportion, 
+      fill = Survey
+    ), 
+    position = "dodge"
+  ) + 
+  scale_fill_manual(
+    values = c(
+      "Kaggle" = "dodgerblue",
+      "Data Hackers" = "purple"
+    )
+  ) +
+  coord_flip() +
+  labs(
+      title = 'Proporção de respostas por cargo e pesquisa',
+      subtitle = 'Kaggle x Data  Hackerz',
+      x = 'Cargo',
+      y = 'Proporção',
+      fill = 'Pesquisa'
+    ) +
+  theme_light()
+
+```
+
+---
+# Salário
 
 
 
