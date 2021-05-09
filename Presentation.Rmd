@@ -15,10 +15,57 @@ output:
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
+source('src.R')
 ```
 
 ---
-# Obtenção dos dados
+# Sumário
+
+* Pesquisa Data Hackerz e Kaggle
+* Apresentação dos resultados
+  - Quantidade de respondentes
+  - Role
+  - Salário
+  - Nível de formação
+  - Idade
+  - Tecnologias (BR)
+  - Linguagens
+  - Distribuição por Estado
+* Bate papo
+
+---
+# Quantidade de respondentes
+
+```{r qtd_respondentes, echo=FALSE, fig.height=5, message=FALSE, warning=FALSE, dpi=500, paged.print=FALSE}
+df_data_hackers <- get_survey_data_from_data_hackerz(
+  file_path = 'survey_data-hackers/datahackers-survey-2019-anonymous-responses.csv'
+)
+
+df_kaggle <- get_survey_data_from_kaggle(
+  file_path = 'survey_kaggle/kaggle_survey_2020_responses.csv'
+)
+
+tibble(
+  pesquisa = c('Data Hackerz', 'Kaggle'),
+  n = c(nrow(df_data_hackers), nrow(df_kaggle))
+) %>% 
+  ggplot(aes(x = pesquisa, y= n)) +
+    geom_bar(stat = 'identity') +
+    geom_text(
+      aes(label = n),
+      #position = position_dodge(0.95),
+      vjust = -.25
+    ) +  
+    labs(
+      title = 'Quantidade de respostas por  pesquisa',
+      subtitle = 'Kaggle x Data  Hackerz',
+      x = 'Pesquisa',
+      y = 'Quantidade de respondentes'
+    ) +
+    theme_light()
+  
+
+```
 
 
 
