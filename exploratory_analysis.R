@@ -84,6 +84,27 @@ dic_degree <- list("Bachelor's degree" = "Bachelor's",
      "I prefer not to answer" = "Not informed",
      "Prefiro não informar" = "Not informed")
 
+dic_age <- list("35-39" = 37,
+                "30-34" = 32,
+                "22-24" = 23,
+                "25-29" = 27,
+                "18-21" = 19.5,
+                "55-59" = 57,
+                "50-54" = 52,
+                "40-44" = 42,
+                "60-69" = 64.5,
+                "45-49" = 47,
+                "70+" = 70)
+
+dic_sex <- list("Masculino" = "Masculino",
+                "Feminino" = "Feminino",
+                "Man" = "Masculino",
+                "Woman" = "Feminino",
+                "Prefer to self-describe" = "Auto-declarado",
+                "Prefer not to say" = "Não informado",
+                "Nonbinary" = "Não-binário",
+                "Não informado" = "Não informado")
+
 # Gráfico - Distribuição salarial
 df_salary <- df_dh %>% 
   select(`('D6', 'anonymized_role')`, `('P16', 'salary_range')`) %>% 
@@ -113,6 +134,7 @@ ggplot(df_salary) +
                   aes(x = Cargo, 
                       ymin = Quartil1, ymax = Quartil3, 
                       y = Media), color = "white") +
+  labs(title = "Salário por cargo na área de dados", x = NULL, y = NULL) +
   coord_flip() + 
   theme_bw()
 
@@ -135,14 +157,17 @@ df_role <- bind_rows(role_dh, role_kg) %>%
   mutate(Proportion = N/sum(N))
 
 ggplot(df_role) + 
-  geom_col(aes(x = Role, y = Proportion, fill = Survey), 
+  geom_col(aes(x = fct_reorder(Role, Proportion), y = Proportion, fill = Survey), 
            position = "dodge") + 
   scale_fill_manual(values = c("Kaggle" = "dodgerblue",
                                "Data Hackers" = "purple")) +
+  labs(title = "Proporção por cargo da área de dados e origem",
+       x = NULL, y = NULL,
+       fill = "Origem") + 
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "cargos.png", width = 5, height = 4, dpi = 600)
+ggsave(device = "png", filename = "cargos.png", width = 7, height = 4, dpi = 600)
 
 
 # Idade dos respondentes
@@ -158,10 +183,34 @@ age_kg <- df_kg %>%
             Age = Q1,
             Role = Q5) %>% 
   drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]))
+  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
+         Age = map_dbl(Age, ~dic_age[[.x]]))
 
 df_age <- bind_rows(age_dh, age_kg)
 
+df_age_avg <- df_age %>% 
+  group_by(Role) %>% 
+  summarise(Quartil1 = quantile(Age, 0.25),
+            Media = mean(Age),
+            Quartil3 = quantile(Age, 0.75))
+
+
+ggplot(df_age) + 
+  geom_violin(aes(x = fct_reorder(Role, Age, mean), 
+                  y = Age), 
+              fill = "dodgerblue", 
+              color = "dodgerblue") + 
+  geom_pointrange(data = df_age_avg, 
+                  aes(x = Role, 
+                      ymin = Quartil1, ymax = Quartil3, 
+                      y = Media), color = "white") +
+  labs(title = "Idade por cargo da área de dados",
+       x = NULL,
+       y = NULL) + 
+  coord_flip() + 
+  theme_bw()
+
+ggsave(device = "png", filename = "idade.png", width = 5, height = 4, dpi = 600)
 
 # Nível de Ensino por cargo
 degree_dh <- df_dh %>% 
@@ -176,7 +225,7 @@ degree_dh <- df_dh %>%
 degree_kg <- df_kg %>% 
   transmute(Survey = "Kaggle",
             Role = Q5,
-            Degree = Q4) %>% 
+            Degree = str_replace(Q4, "’", "'")) %>% 
   drop_na() %>% 
   mutate(Role = map_chr(Role, ~dic_role[[.x]]),
          Degree = map_chr(Degree, ~dic_degree[[.x]])) %>% 
@@ -192,14 +241,17 @@ df_degree <- bind_rows(degree_dh, degree_kg) %>%
   group_by(Role) %>% 
   mutate(Proportion = N/sum(N))
 
-
 ggplot(df_degree) + 
   geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
   scale_fill_viridis_c() + 
+  labs(title = "Distribuição de nível de formação por cargo",
+       x = NULL,
+       y = NULL, 
+       fill = "Proporção") +
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "formação.png", width = 5, height = 4, dpi = 600)
+ggsave(device = "png", filename = "formação.png", width = 7, height = 4, dpi = 600)
 
 df_degree_survey <- bind_rows(degree_dh, degree_kg) %>%  
   mutate(Degree = factor(Degree, ordered = T, 
@@ -211,23 +263,65 @@ df_degree_survey <- bind_rows(degree_dh, degree_kg) %>%
   group_by(Survey, Role) %>% 
   mutate(Proportion = N/sum(N))
 
-
 ggplot(df_degree_survey %>% filter(Survey == "Data Hackers")) + 
   geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
   scale_fill_viridis_c() + 
+  labs(title = "Distribuição de nível de formação por cargo - Data hackers",
+       x = NULL,
+       y = NULL, 
+       fill = "Proporção") +
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "formação_dh.png", width = 5, height = 4, dpi = 600)
+ggsave(device = "png", filename = "formação_dh.png", width = 7, height = 4, dpi = 600)
 
 
 ggplot(df_degree_survey %>% filter(Survey == "Kaggle")) + 
   geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
   scale_fill_viridis_c() + 
+  labs(title = "Distribuição de nível de formação por cargo - Data hackers",
+       x = NULL,
+       y = NULL, 
+       fill = "Proporção") +
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "formação_kg.png", width = 5, height = 4, dpi = 600)
+ggsave(device = "png", filename = "formação_kg.png", width = 7, height = 4, dpi = 600)
 
+# Sexo dos participantes
+gender_dh <- df_dh %>% 
+  mutate(Survey = "Data Hackers",
+         Role = `('D6', 'anonymized_role')`,
+         Gender = `('P2', 'gender')`) %>% 
+  transmute(Survey,
+            Gender = ifelse(is.na(Gender), "Não informado", Gender),
+            Role) %>% 
+  drop_na() %>% 
+  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
+         Gender = map_chr(Gender, ~dic_sex[[.x]]))
 
- 
+gender_kg <- df_kg %>% 
+  transmute(Survey = "Kaggle",
+            Role = Q5,
+            Gender = Q2) %>% 
+  drop_na() %>% 
+  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
+         Gender = map_chr(Gender, ~dic_sex[[.x]]))
+
+df_gender <- bind_rows(gender_dh, gender_kg) %>% 
+  group_by(Survey, Role, Gender) %>% 
+  summarise(N = n()) %>% 
+  group_by(Survey, Role) %>% 
+  mutate(Proportion = N/sum(N))
+
+ggplot(df_gender %>% filter(Gender == "Masculino")) + 
+  geom_col(aes(x = fct_reorder(Role, Proportion), y = Proportion, fill = Survey), 
+           position = "dodge") + 
+  scale_fill_manual(values = c("Kaggle" = "dodgerblue",
+                               "Data Hackers" = "purple")) + 
+  labs(title = "Proporção de homens por cargo e origem",
+       x = NULL, y = NULL) +
+  coord_flip() + 
+  theme_bw()
+
+ggsave(device = "png", filename = "genero.png", width = 7, height = 4, dpi = 600)
