@@ -4,7 +4,7 @@
 
 Pacotes utilizadados:
 
-``` R
+``` r
 install.packages('tidyverse')
 install.packages('xaringan')
 ```
