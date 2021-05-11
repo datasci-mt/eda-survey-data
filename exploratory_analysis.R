@@ -19,43 +19,34 @@ df_kg <- read_csv(
   col_names = cols
 )
 
-# Quantidade de respondentes
-nrow(df_dh)
-nrow(df_kg)
-
-
-# Respondents by role
-table(df_dh$`('D6', 'anonymized_role')`)
-table(df_kg$Q5)
-
 # Transformation dictionaries
-dic_role <- list("Outras" = "Other", 
-                 "Data Analyst/Analista de Dados" = "Data Analyst", 
-                 "Business Intelligence/Analista de BI" = "Business Analyst",  
-                 "Desenvolvedor ou Engenheiro de Software" = "Software Engineer", 
-                 "Data Scientist/Cientista de Dados" = "Data Scientist", 
-                 "Analista de Inteligência de Mercado" = "Other", 
-                 "Engenheiro" = "Other", 
-                 "Business Analyst/Analista de Negócios" = "Other", 
-                 "Data Engineer/Engenheiro de Dados" = "Data Engineer", 
-                 "DBA/Administrador de Banco de Dados" = "Other", 
-                 "Analista de Marketing" = "Other", 
-                 "Estatístico" = "Statistician", 
-                 "Engenheiro de Machine Learning" = "ML Engineer", 
-                 "Economista" = "Other",
-                 "Student" = "Other", 
-                 "Data Engineer" = "Data Engineer", 
-                 "Software Engineer" = "Software Engineer", 
-                 "Data Scientist" = "Data Scientist",
-                 "Data Analyst" = "Data Analyst",
-                 "Research Scientist" = "Other",
-                 "Other" = "Other",
-                 "Currently not employed" = "Other",   
-                 "Statistician" = "Statistician",
-                 "Product/Project Manager" = "Other",
-                 "Machine Learning Engineer" = "ML Engineer",
-                 "Business Analyst" = "Business Analyst",
-                 "DBA/Database Engineer" = "Other")
+dic_role <- list("Outras" = "Outros", 
+                 "Data Analyst/Analista de Dados" = "Analista de Dados", 
+                 "Business Intelligence/Analista de BI" = "Analista de BI",  
+                 "Desenvolvedor ou Engenheiro de Software" = "Eng. de Software", 
+                 "Data Scientist/Cientista de Dados" = "Cientista de Dados", 
+                 "Analista de Inteligência de Mercado" = "Outros", 
+                 "Engenheiro" = "Outros", 
+                 "Business Analyst/Analista de Negócios" = "Outros", 
+                 "Data Engineer/Engenheiro de Dados" = "Eng. de Dados", 
+                 "DBA/Administrador de Banco de Dados" = "Outros", 
+                 "Analista de Marketing" = "Outros", 
+                 "Estatístico" = "Estatístico", 
+                 "Engenheiro de Machine Learning" = "Engenheiro de ML", 
+                 "Economista" = "Outros",
+                 "Student" = "Outros", 
+                 "Data Engineer" = "Eng. de Dados", 
+                 "Software Engineer" = "Eng. de Software", 
+                 "Data Scientist" = "Cientista de Dados",
+                 "Data Analyst" = "Analista de Dados",
+                 "Research Scientist" = "Outros",
+                 "Other" = "Outros",
+                 "Currently not employed" = "Outros",   
+                 "Statistician" = "Estatístico",
+                 "Product/Project Manager" = "Outros",
+                 "Machine Learning Engineer" = "Engenheiro de ML",
+                 "Business Analyst" = "Analista de BI",
+                 "DBA/Database Engineer" = "Outros")
 
 dic_salary <- list("Menos de R$ 1.000/mês" = 500,
                    "de R$ 1.001/mês a R$ 2.000/mês" = 1500,
@@ -69,20 +60,20 @@ dic_salary <- list("Menos de R$ 1.000/mês" = 500,
                    "de R$ 20.001/mês a R$ 25.000/mês" = 22500,
                    "Acima de R$ 25.001/mês" = 25000)
 
-dic_degree <- list("Bachelor's degree" = "Bachelor's",
-     "Graduação/Bacharelado" = "Bachelor's",
-     "Master's degree" = "Master's",
-     "Mestrado" = "Master's",
-     "Doctoral degree" = "Doc./Phd",
-     "Doutorado ou Phd" = "Doc./Phd",
-     "Professional degree" = "Professional",
-     "Pós-graduação" = "Professional",
-     "Some college/university study without earning a bachelor's degree" = "Grad. Student",
-     "Estudante de Graduação" = "Grad. Student",
-     "No formal education past high school" = "No formal ed.",
-     "Não tenho graduação formal" = "No formal ed.",
-     "I prefer not to answer" = "Not informed",
-     "Prefiro não informar" = "Not informed")
+dic_degree <- list("Bachelor's degree" = "Graduação",
+     "Graduação/Bacharelado" = "Graduação",
+     "Master's degree" = "Mestrado",
+     "Mestrado" = "Mestrado",
+     "Doctoral degree" = "Doutorado/Phd",
+     "Doutorado ou Phd" = "Doutorado/Phd",
+     "Professional degree" = "Pós-Graduação",
+     "Pós-graduação" = "Pós-Graduação",
+     "Some college/university study without earning a bachelor's degree" = "Estudante Grad.",
+     "Estudante de Graduação" = "Estudante Grad.",
+     "No formal education past high school" = "S/ Ed. Formal",
+     "Não tenho graduação formal" = "S/ Ed. Formal",
+     "I prefer not to answer" = "Não informado",
+     "Prefiro não informar" = "Não informado")
 
 dic_age <- list("35-39" = 37,
                 "30-34" = 32,
@@ -105,52 +96,18 @@ dic_sex <- list("Masculino" = "Masculino",
                 "Nonbinary" = "Não-binário",
                 "Não informado" = "Não informado")
 
-# Gráfico - Distribuição salarial
-df_salary <- df_dh %>% 
-  select(`('D6', 'anonymized_role')`, `('P16', 'salary_range')`) %>% 
-  drop_na() %>% 
-  mutate(Cargo = map_chr(.x = `('D6', 'anonymized_role')`, 
-                         .f = ~dic_role[[.x]]),
-         Gargo = as.factor(Cargo),
-         Salario = map_dbl(.x = `('P16', 'salary_range')`, 
-                           .f = ~dic_salary[[.x]]))
-
-
-df_salary_avg <- df_salary %>% 
-  group_by(Cargo) %>% 
-  summarise(Quartil1 = quantile(Salario, 0.25),
-            Media = mean(Salario),
-            Quartil3 = quantile(Salario, 0.75))
-
-df_salary$Cargo <- fct_reorder(df_salary$Cargo, df_salary$Salario, mean)
-df_salary$Cargo <- fct_reorder(df_salary$Cargo, df_salary$Salario, mean)
-
-ggplot(df_salary) + 
-  geom_violin(aes(x = Cargo, 
-                  y = Salario), 
-              fill = "dodgerblue", 
-              color = "dodgerblue") + 
-  geom_pointrange(data = df_salary_avg, 
-                  aes(x = Cargo, 
-                      ymin = Quartil1, ymax = Quartil3, 
-                      y = Media), color = "white") +
-  labs(title = "Salário por cargo na área de dados", x = NULL, y = NULL) +
-  coord_flip() + 
-  theme_bw()
-
-ggsave(device = "png", filename = "faixa_salarial.png", width = 5, height = 4, dpi = 600)
 
 # Cargos ocupados
 role_kg <- tibble(Survey = "Kaggle",
                   Role = map_chr(.x = df_kg$Q5[!is.na(df_kg$Q5)], 
                                  .f = ~dic_role[[.x]]))
-                  
+
 role_dh <- tibble(Survey = "Data Hackers",
                   Role = map_chr(.x = df_dh$`('D6', 'anonymized_role')`[!is.na(df_dh$`('D6', 'anonymized_role')`)], 
                                  .f = ~dic_role[[.x]]))
 
 df_role <- bind_rows(role_dh, role_kg) %>% 
-  filter(Role != "Other") %>% 
+  filter(Role != "Outros") %>% 
   group_by(Survey, Role) %>% 
   summarise(N = n()) %>% 
   group_by(Survey) %>% 
@@ -169,7 +126,6 @@ ggplot(df_role) +
 
 ggsave(device = "png", filename = "cargos.png", width = 7, height = 4, dpi = 600)
 
-
 # Idade dos respondentes
 age_dh <- df_dh %>% 
   transmute(Survey = "Data Hackers",
@@ -186,7 +142,8 @@ age_kg <- df_kg %>%
   mutate(Role = map_chr(Role, ~dic_role[[.x]]),
          Age = map_dbl(Age, ~dic_age[[.x]]))
 
-df_age <- bind_rows(age_dh, age_kg)
+df_age <- bind_rows(age_dh, age_kg) %>% 
+  filter(Role != "Outros")
 
 df_age_avg <- df_age %>% 
   group_by(Role) %>% 
@@ -195,7 +152,7 @@ df_age_avg <- df_age %>%
             Quartil3 = quantile(Age, 0.75))
 
 
-ggplot(df_age) + 
+ggplot(df_age %>% filter(Role != "Outros")) + 
   geom_violin(aes(x = fct_reorder(Role, Age, mean), 
                   y = Age), 
               fill = "dodgerblue", 
@@ -212,81 +169,6 @@ ggplot(df_age) +
 
 ggsave(device = "png", filename = "idade.png", width = 5, height = 4, dpi = 600)
 
-# Nível de Ensino por cargo
-degree_dh <- df_dh %>% 
-  transmute(Survey = "Data Hackers",
-            Role = `('D6', 'anonymized_role')`,
-            Degree = `('P8', 'degreee_level')`) %>% 
-  drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
-         Degree = map_chr(Degree, ~dic_degree[[.x]])) %>% 
-  filter(Role != "Other", Degree != "Not informed")
-
-degree_kg <- df_kg %>% 
-  transmute(Survey = "Kaggle",
-            Role = Q5,
-            Degree = str_replace(Q4, "’", "'")) %>% 
-  drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
-         Degree = map_chr(Degree, ~dic_degree[[.x]])) %>% 
-  filter(Role != "Other", Degree != "Not informed")
-
-df_degree <- bind_rows(degree_dh, degree_kg) %>% 
-  mutate(Degree = factor(Degree, ordered = T, 
-                         levels = c("No formal ed.", "Grad. Student", 
-                         "Bachelor's", "Master's", "Doc./Phd",
-                         "Professional"))) %>% 
-  group_by(Role, Degree) %>% 
-  summarise(N = n()) %>% 
-  group_by(Role) %>% 
-  mutate(Proportion = N/sum(N))
-
-ggplot(df_degree) + 
-  geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
-  scale_fill_viridis_c() + 
-  labs(title = "Distribuição de nível de formação por cargo",
-       x = NULL,
-       y = NULL, 
-       fill = "Proporção") +
-  coord_flip() + 
-  theme_bw()
-
-ggsave(device = "png", filename = "formação.png", width = 7, height = 4, dpi = 600)
-
-df_degree_survey <- bind_rows(degree_dh, degree_kg) %>%  
-  mutate(Degree = factor(Degree, ordered = T, 
-                         levels = c("No formal ed.", "Grad. Student", 
-                                    "Bachelor's", "Master's", "Doc./Phd",
-                                    "Professional"))) %>% 
-  group_by(Survey, Role, Degree) %>% 
-  summarise(N = n()) %>% 
-  group_by(Survey, Role) %>% 
-  mutate(Proportion = N/sum(N))
-
-ggplot(df_degree_survey %>% filter(Survey == "Data Hackers")) + 
-  geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
-  scale_fill_viridis_c() + 
-  labs(title = "Distribuição de nível de formação por cargo - Data hackers",
-       x = NULL,
-       y = NULL, 
-       fill = "Proporção") +
-  coord_flip() + 
-  theme_bw()
-
-ggsave(device = "png", filename = "formação_dh.png", width = 7, height = 4, dpi = 600)
-
-
-ggplot(df_degree_survey %>% filter(Survey == "Kaggle")) + 
-  geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
-  scale_fill_viridis_c() + 
-  labs(title = "Distribuição de nível de formação por cargo - Data hackers",
-       x = NULL,
-       y = NULL, 
-       fill = "Proporção") +
-  coord_flip() + 
-  theme_bw()
-
-ggsave(device = "png", filename = "formação_kg.png", width = 7, height = 4, dpi = 600)
 
 # Sexo dos participantes
 gender_dh <- df_dh %>% 
@@ -309,6 +191,7 @@ gender_kg <- df_kg %>%
          Gender = map_chr(Gender, ~dic_sex[[.x]]))
 
 df_gender <- bind_rows(gender_dh, gender_kg) %>% 
+  filter(Role != "Outros") %>% 
   group_by(Survey, Role, Gender) %>% 
   summarise(N = n()) %>% 
   group_by(Survey, Role) %>% 
@@ -325,3 +208,111 @@ ggplot(df_gender %>% filter(Gender == "Masculino")) +
   theme_bw()
 
 ggsave(device = "png", filename = "genero.png", width = 7, height = 4, dpi = 600)
+
+# Gráfico - Distribuição salarial ---
+df_salary <- df_dh %>% 
+  select(`('D6', 'anonymized_role')`, `('P16', 'salary_range')`) %>% 
+  drop_na() %>% 
+  mutate(Role = map_chr(.x = `('D6', 'anonymized_role')`, 
+                         .f = ~dic_role[[.x]]),
+         Salary = map_dbl(.x = `('P16', 'salary_range')`, 
+                           .f = ~dic_salary[[.x]])) %>% 
+  filter(Role != "Outros")
+
+df_salary_avg <- df_salary %>% 
+  group_by(Role) %>% 
+  summarise(Quartil1 = quantile(Salary, 0.25),
+            Media = mean(Salary),
+            Quartil3 = quantile(Salary, 0.75))
+
+ggplot(df_salary) + 
+  geom_violin(aes(x = fct_reorder(Role, Salary, mean), 
+                  y = Salary), 
+              fill = "dodgerblue", 
+              color = "dodgerblue") + 
+  geom_pointrange(data = df_salary_avg, 
+                  aes(x = Role, 
+                      ymin = Quartil1, ymax = Quartil3, 
+                      y = Media), color = "white") +
+  labs(title = "Salário por cargo na área de dados", x = NULL, y = NULL) +
+  coord_flip() + 
+  theme_bw()
+
+ggsave(device = "png", filename = "faixa_salarial.png", width = 5, height = 4, dpi = 600)
+
+
+# Nível de Ensino por cargo
+degree_dh <- df_dh %>% 
+  transmute(Survey = "Data Hackers",
+            Role = `('D6', 'anonymized_role')`,
+            Degree = `('P8', 'degreee_level')`) %>% 
+  drop_na() %>% 
+  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
+         Degree = map_chr(Degree, ~dic_degree[[.x]])) %>% 
+  filter(Role != "Outros", Degree != "Não informado")
+
+degree_kg <- df_kg %>% 
+  transmute(Survey = "Kaggle",
+            Role = Q5,
+            Degree = str_replace(Q4, "’", "'")) %>% 
+  drop_na() %>% 
+  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
+         Degree = map_chr(Degree, ~dic_degree[[.x]])) %>% 
+  filter(Role != "Outros", Degree != "Não informado")
+
+df_degree <- bind_rows(degree_dh, degree_kg) %>% 
+  mutate(Degree = factor(Degree, ordered = T, 
+                         levels = c("S/ Ed. Formal", "Estudante Grad.", 
+                                    "Graduação", "Pós-Graduação", 
+                                    "Mestrado", "Doutorado/Phd"))) %>% 
+  group_by(Role, Degree) %>% 
+  summarise(N = n()) %>% 
+  group_by(Role) %>% 
+  mutate(Proportion = N/sum(N))
+
+ggplot(df_degree) + 
+  geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
+  scale_fill_viridis_c() + 
+  labs(title = "Distribuição de nível de formação por cargo",
+       x = NULL,
+       y = NULL, 
+       fill = "Proporção") +
+  coord_flip() + 
+  theme_bw()
+
+ggsave(device = "png", filename = "formação.png", width = 8, height = 4, dpi = 600)
+
+df_degree_survey <- bind_rows(degree_dh, degree_kg) %>% 
+  mutate(Degree = factor(Degree, ordered = T, 
+                         levels = c("S/ Ed. Formal", "Estudante Grad.", 
+                                    "Graduação", "Pós-Graduação", 
+                                    "Mestrado", "Doutorado/Phd"))) %>% 
+  group_by(Survey, Role, Degree) %>% 
+  summarise(N = n()) %>% 
+  group_by(Survey, Role) %>% 
+  mutate(Proportion = N/sum(N))
+
+ggplot(df_degree_survey %>% filter(Survey == "Data Hackers")) + 
+  geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
+  scale_fill_viridis_c() + 
+  labs(title = "Distribuição de nível de formação por cargo - Data hackers",
+       x = NULL,
+       y = NULL, 
+       fill = "Proporção") +
+  coord_flip() + 
+  theme_bw()
+
+ggsave(device = "png", filename = "formação_dh.png", width = 8, height = 4, dpi = 600)
+
+
+ggplot(df_degree_survey %>% filter(Survey == "Kaggle")) + 
+  geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
+  scale_fill_viridis_c() + 
+  labs(title = "Distribuição de nível de formação por cargo - Data hackers",
+       x = NULL,
+       y = NULL, 
+       fill = "Proporção") +
+  coord_flip() + 
+  theme_bw()
+
+ggsave(device = "png", filename = "formação_kg.png", width = 8, height = 4, dpi = 600)
