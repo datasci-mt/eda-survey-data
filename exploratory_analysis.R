@@ -118,7 +118,7 @@ ggplot(df_role) +
            position = "dodge") + 
   scale_fill_manual(values = c("Kaggle" = "dodgerblue",
                                "Data Hackers" = "purple")) +
-  labs(title = "Proporção por cargo da área de dados e origem",
+  labs(title = "Proporção de respostas por cargo e pesquisa",
        x = NULL, y = NULL,
        fill = "Origem") + 
   coord_flip() + 
@@ -280,7 +280,7 @@ ggplot(df_degree) +
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "formação.png", width = 8, height = 4, dpi = 600)
+ggsave(device = "png", filename = "formação.png", width = 8, height = 4, dpi = 1200)
 
 df_degree_survey <- bind_rows(degree_dh, degree_kg) %>% 
   mutate(Degree = factor(Degree, ordered = T, 
@@ -308,7 +308,7 @@ ggsave(device = "png", filename = "formação_dh.png", width = 8, height = 4, dp
 ggplot(df_degree_survey %>% filter(Survey == "Kaggle")) + 
   geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
   scale_fill_viridis_c() + 
-  labs(title = "Distribuição de nível de formação por cargo - Data hackers",
+  labs(title = "Distribuição de nível de formação por cargo - Kaggle",
        x = NULL,
        y = NULL, 
        fill = "Proporção") +
