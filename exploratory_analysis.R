@@ -1,138 +1,33 @@
-# libraries used
-library(tidyverse)
+# libraries and functions used ----
+source(file = "source_code.R", encoding = "UTF-8")
 
+# Reading the data ----
+df_dh <- get_survey_data_dh(
+  file_path = "survey_data-hackers/datahackers-survey-2019-anonymous-responses.csv") %>% 
+  mutate(
+    Survey = "Data Hackers",
+    Role = get_role(`('D6', 'anonymized_role')`),
+    Salary = get_salary(`('P16', 'salary_range')`),
+    Degree = get_degree(`('P8', 'degreee_level')`),
+    Gender = get_gender(`('P2', 'gender')`),
+    Age = `('P1', 'age')`
+  )
 
-# Reading the data
-df_dh <- read_csv(
-  file = "survey_data-hackers/datahackers-survey-2019-anonymous-responses.csv"
-)
+df_kg <- get_survey_data_kg(
+  file_path = "survey_kaggle/kaggle_survey_2020_responses.csv") %>% 
+  mutate(
+    Survey = "Kaggle",
+    Role = get_role(Q5),
+    Salary = NA,
+    Degree = get_degree(Q4),
+    Gender = get_gender(Q2),
+    Age = get_age(Q1)
+  )
 
-cols <- read_lines(
-  file = "survey_kaggle/kaggle_survey_2020_responses.csv", 
-  n_max = 1
-  ) %>% 
-  str_split(",", simplify = T)
-
-df_kg <- read_csv(
-  file = "survey_kaggle/kaggle_survey_2020_responses.csv", 
-  skip = 2, 
-  col_names = cols
-)
-
-# Transformation dictionaries
-dic_role <- list("Outras" = "Outros", 
-                 "Data Analyst/Analista de Dados" = "Analista de Dados", 
-                 "Business Intelligence/Analista de BI" = "Analista de BI",  
-                 "Desenvolvedor ou Engenheiro de Software" = "Eng. de Software", 
-                 "Data Scientist/Cientista de Dados" = "Cientista de Dados", 
-                 "Analista de Inteligência de Mercado" = "Outros", 
-                 "Engenheiro" = "Outros", 
-                 "Business Analyst/Analista de Negócios" = "Outros", 
-                 "Data Engineer/Engenheiro de Dados" = "Eng. de Dados", 
-                 "DBA/Administrador de Banco de Dados" = "Outros", 
-                 "Analista de Marketing" = "Outros", 
-                 "Estatístico" = "Estatístico", 
-                 "Engenheiro de Machine Learning" = "Engenheiro de ML", 
-                 "Economista" = "Outros",
-                 "Student" = "Outros", 
-                 "Data Engineer" = "Eng. de Dados", 
-                 "Software Engineer" = "Eng. de Software", 
-                 "Data Scientist" = "Cientista de Dados",
-                 "Data Analyst" = "Analista de Dados",
-                 "Research Scientist" = "Outros",
-                 "Other" = "Outros",
-                 "Currently not employed" = "Outros",   
-                 "Statistician" = "Estatístico",
-                 "Product/Project Manager" = "Outros",
-                 "Machine Learning Engineer" = "Engenheiro de ML",
-                 "Business Analyst" = "Analista de BI",
-                 "DBA/Database Engineer" = "Outros")
-
-dic_salary <- list("Menos de R$ 1.000/mês" = 500,
-                   "de R$ 1.001/mês a R$ 2.000/mês" = 1500,
-                   "de R$ 2.001/mês a R$ 3000/mês" = 2500,
-                   "de R$ 3.001/mês a R$ 4.000/mês" = 3500,
-                   "de R$ 4.001/mês a R$ 6.000/mês" = 5000,
-                   "de R$ 6.001/mês a R$ 8.000/mês" = 7000,  
-                   "de R$ 8.001/mês a R$ 12.000/mês" = 10000,
-                   "de R$ 12.001/mês a R$ 16.000/mês" = 14000,                               
-                   "de R$ 16.001/mês a R$ 20.000/mês" = 18000,
-                   "de R$ 20.001/mês a R$ 25.000/mês" = 22500,
-                   "Acima de R$ 25.001/mês" = 25000)
-
-dic_degree <- list("Bachelor's degree" = "Graduação",
-     "Graduação/Bacharelado" = "Graduação",
-     "Master's degree" = "Mestrado",
-     "Mestrado" = "Mestrado",
-     "Doctoral degree" = "Doutorado/Phd",
-     "Doutorado ou Phd" = "Doutorado/Phd",
-     "Professional degree" = "Pós-Graduação",
-     "Pós-graduação" = "Pós-Graduação",
-     "Some college/university study without earning a bachelor's degree" = "Estudante Grad.",
-     "Estudante de Graduação" = "Estudante Grad.",
-     "No formal education past high school" = "S/ Ed. Formal",
-     "Não tenho graduação formal" = "S/ Ed. Formal",
-     "I prefer not to answer" = "Não informado",
-     "Prefiro não informar" = "Não informado")
-
-dic_age <- list("35-39" = 37,
-                "30-34" = 32,
-                "22-24" = 23,
-                "25-29" = 27,
-                "18-21" = 19.5,
-                "55-59" = 57,
-                "50-54" = 52,
-                "40-44" = 42,
-                "60-69" = 64.5,
-                "45-49" = 47,
-                "70+" = 70)
-
-dic_sex <- list("Masculino" = "Masculino",
-                "Feminino" = "Feminino",
-                "Man" = "Masculino",
-                "Woman" = "Feminino",
-                "Prefer to self-describe" = "Auto-declarado",
-                "Prefer not to say" = "Não informado",
-                "Nonbinary" = "Não-binário",
-                "Não informado" = "Não informado")
-
-dic_lang <- list("sql_" = "SQL",
-                 "r" = "R",
-                 "python" = "Python",
-                 "c_c++_c#" = "C/C++/C#",
-                 "dotnet" = "DotNet",
-                 "java" = "Java",
-                 "julia" = "Julia",
-                 "sas_stata" = "SAS/Stata",
-                 "visual_basic_vba" = "VBA",
-                 "scala" = "Scala",
-                 "matlab" = "MATLAB",
-                 "php" = "PHP",
-                 "no_listed_languages" = "Outra",
-                 "Python" = "Python",
-                 "R" = "R",
-                 "SQL" = "SQL",
-                 "C" = "C",
-                 "C++" = "C++",
-                 "Java" = "Java",
-                 "Javascript" = "Javascript",
-                 "Julia" = "Julia",
-                 "Swift" = "Swift",
-                 "Bash" = "Bash",
-                 "MATLAB" = "MATLAB",
-                 "None" = "Nenhuma",
-                 "Other" = "Outra")
-
-# Cargos ocupados
-role_kg <- tibble(Survey = "Kaggle",
-                  Role = map_chr(.x = df_kg$Q5[!is.na(df_kg$Q5)], 
-                                 .f = ~dic_role[[.x]]))
-
-role_dh <- tibble(Survey = "Data Hackers",
-                  Role = map_chr(.x = df_dh$`('D6', 'anonymized_role')`[!is.na(df_dh$`('D6', 'anonymized_role')`)], 
-                                 .f = ~dic_role[[.x]]))
-
-df_role <- bind_rows(role_dh, role_kg) %>% 
+# Cargos ocupados ----
+df_role <- bind_rows(df_kg %>% select(Survey, Role),
+                     df_dh %>% select(Survey, Role)) %>% 
+  drop_na() %>% 
   filter(Role != "Outros") %>% 
   group_by(Survey, Role) %>% 
   summarise(N = n()) %>% 
@@ -140,35 +35,25 @@ df_role <- bind_rows(role_dh, role_kg) %>%
   mutate(Proportion = N/sum(N))
 
 ggplot(df_role) + 
-  geom_col(aes(x = fct_reorder(Role, Proportion), y = Proportion, fill = Survey), 
+  geom_col(aes(x = fct_reorder(Role, Proportion), 
+               y = Proportion, 
+               fill = Survey), 
            position = "dodge") + 
   scale_fill_manual(values = c("Kaggle" = "dodgerblue",
                                "Data Hackers" = "purple")) +
   labs(title = "Proporção de respostas por cargo e pesquisa",
-       x = NULL, y = NULL,
+       x = NULL, 
+       y = NULL,
        fill = "Origem") + 
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "cargos.png", width = 7, height = 4, dpi = 600)
+ggsave(filename = "img/cargos.png", device = "png", width = 7, height = 4, dpi = 600)
 
-# Idade dos respondentes
-age_dh <- df_dh %>% 
-  transmute(Survey = "Data Hackers",
-            Age = `('P1', 'age')`,
-            Role = `('D6', 'anonymized_role')`) %>% 
+# Idade dos respondentes ----
+df_age <- bind_rows(df_dh %>% select(Survey, Age, Role),
+                    df_kg %>% select(Survey, Age, Role)) %>% 
   drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]))
-
-age_kg <- df_kg %>% 
-  transmute(Survey = "Kaggle",
-            Age = Q1,
-            Role = Q5) %>% 
-  drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
-         Age = map_dbl(Age, ~dic_age[[.x]]))
-
-df_age <- bind_rows(age_dh, age_kg) %>% 
   filter(Role != "Outros")
 
 df_age_avg <- df_age %>% 
@@ -178,7 +63,7 @@ df_age_avg <- df_age %>%
             Quartil3 = quantile(Age, 0.75))
 
 
-ggplot(df_age %>% filter(Role != "Outros")) + 
+ggplot(df_age) + 
   geom_violin(aes(x = fct_reorder(Role, Age, mean), 
                   y = Age), 
               fill = "dodgerblue", 
@@ -193,30 +78,13 @@ ggplot(df_age %>% filter(Role != "Outros")) +
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "idade.png", width = 5, height = 4, dpi = 600)
+ggsave(filename = "img/idade.png", device = "png", width = 5, height = 4, dpi = 600)
 
 
-# Sexo dos participantes
-gender_dh <- df_dh %>% 
-  mutate(Survey = "Data Hackers",
-         Role = `('D6', 'anonymized_role')`,
-         Gender = `('P2', 'gender')`) %>% 
-  transmute(Survey,
-            Gender = ifelse(is.na(Gender), "Não informado", Gender),
-            Role) %>% 
+# Gênero dos participantes ----
+df_gender <- bind_rows(df_kg %>% select(Survey, Role, Gender),
+                       df_dh %>% select(Survey, Role, Gender)) %>% 
   drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
-         Gender = map_chr(Gender, ~dic_sex[[.x]]))
-
-gender_kg <- df_kg %>% 
-  transmute(Survey = "Kaggle",
-            Role = Q5,
-            Gender = Q2) %>% 
-  drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
-         Gender = map_chr(Gender, ~dic_sex[[.x]]))
-
-df_gender <- bind_rows(gender_dh, gender_kg) %>% 
   filter(Role != "Outros") %>% 
   group_by(Survey, Role, Gender) %>% 
   summarise(N = n()) %>% 
@@ -233,16 +101,12 @@ ggplot(df_gender %>% filter(Gender == "Masculino")) +
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "genero.png", width = 7, height = 4, dpi = 600)
+ggsave(filename = "img/genero.png", device = "png", width = 7, height = 4, dpi = 600)
 
-# Gráfico - Distribuição salarial ---
+# Distribuição salarial no Data Hackers ----
 df_salary <- df_dh %>% 
-  select(`('D6', 'anonymized_role')`, `('P16', 'salary_range')`) %>% 
+  select(Role, Salary) %>% 
   drop_na() %>% 
-  mutate(Role = map_chr(.x = `('D6', 'anonymized_role')`, 
-                         .f = ~dic_role[[.x]]),
-         Salary = map_dbl(.x = `('P16', 'salary_range')`, 
-                           .f = ~dic_salary[[.x]])) %>% 
   filter(Role != "Outros")
 
 df_salary_avg <- df_salary %>% 
@@ -264,51 +128,14 @@ ggplot(df_salary) +
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "faixa_salarial.png", width = 5, height = 4, dpi = 600)
+ggsave(filename = "img/faixa_salarial.png", device = "png", width = 5, height = 4, dpi = 600)
 
 
-# Nível de Ensino por cargo
-degree_dh <- df_dh %>% 
-  transmute(Survey = "Data Hackers",
-            Role = `('D6', 'anonymized_role')`,
-            Degree = `('P8', 'degreee_level')`) %>% 
+# Nível de Ensino por cargo ----
+df_degree <- bind_rows(df_dh %>% select(Survey, Role, Degree),
+                       df_kg %>% select(Survey, Role, Degree)) %>% 
   drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
-         Degree = map_chr(Degree, ~dic_degree[[.x]])) %>% 
-  filter(Role != "Outros", Degree != "Não informado")
-
-degree_kg <- df_kg %>% 
-  transmute(Survey = "Kaggle",
-            Role = Q5,
-            Degree = str_replace(Q4, "’", "'")) %>% 
-  drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]),
-         Degree = map_chr(Degree, ~dic_degree[[.x]])) %>% 
-  filter(Role != "Outros", Degree != "Não informado")
-
-df_degree <- bind_rows(degree_dh, degree_kg) %>% 
-  mutate(Degree = factor(Degree, ordered = T, 
-                         levels = c("S/ Ed. Formal", "Estudante Grad.", 
-                                    "Graduação", "Pós-Graduação", 
-                                    "Mestrado", "Doutorado/Phd"))) %>% 
-  group_by(Role, Degree) %>% 
-  summarise(N = n()) %>% 
-  group_by(Role) %>% 
-  mutate(Proportion = N/sum(N))
-
-ggplot(df_degree) + 
-  geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
-  scale_fill_viridis_c() + 
-  labs(title = "Distribuição de nível de formação por cargo",
-       x = NULL,
-       y = NULL, 
-       fill = "Proporção") +
-  coord_flip() + 
-  theme_bw()
-
-ggsave(device = "png", filename = "formação.png", width = 8, height = 4, dpi = 1200)
-
-df_degree_survey <- bind_rows(degree_dh, degree_kg) %>% 
+  filter(Role != "Outros", Degree != "Não informado") %>% 
   mutate(Degree = factor(Degree, ordered = T, 
                          levels = c("S/ Ed. Formal", "Estudante Grad.", 
                                     "Graduação", "Pós-Graduação", 
@@ -318,7 +145,7 @@ df_degree_survey <- bind_rows(degree_dh, degree_kg) %>%
   group_by(Survey, Role) %>% 
   mutate(Proportion = N/sum(N))
 
-ggplot(df_degree_survey %>% filter(Survey == "Data Hackers")) + 
+ggplot(df_degree %>% filter(Survey == "Data Hackers")) + 
   geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
   scale_fill_viridis_c() + 
   labs(title = "Distribuição de nível de formação por cargo - Data hackers",
@@ -328,10 +155,10 @@ ggplot(df_degree_survey %>% filter(Survey == "Data Hackers")) +
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "formação_dh.png", width = 8, height = 4, dpi = 600)
+ggsave(filename = "img/formação_dh.png", device = "png", width = 8, height = 4, dpi = 600)
 
 
-ggplot(df_degree_survey %>% filter(Survey == "Kaggle")) + 
+ggplot(df_degree %>% filter(Survey == "Kaggle")) + 
   geom_tile(aes(x = Role, y = Degree, fill = Proportion)) + 
   scale_fill_viridis_c() + 
   labs(title = "Distribuição de nível de formação por cargo - Kaggle",
@@ -341,20 +168,69 @@ ggplot(df_degree_survey %>% filter(Survey == "Kaggle")) +
   coord_flip() + 
   theme_bw()
 
-ggsave(device = "png", filename = "formação_kg.png", width = 8, height = 4, dpi = 600)
+ggsave(filename = "img/formação_kg.png", device = "png", width = 8, height = 4, dpi = 600)
+
+# Linguagens Usadas ----
+lang_dh <- df_dh %>%
+  select(Role, starts_with("('P21'")) %>% 
+  drop_na() %>% 
+  pivot_longer(-Role, names_to = "lang", values_to = "use") %>% 
+  mutate(Survey = "Data Hackers",
+         lang = str_sub(lang, 10, str_length(lang)-2))
+
+lang_kg <- df_kg %>% 
+  select(Role, starts_with("Q7")) %>% 
+  pivot_longer(-Role, names_to = "lang", values_to = "use") %>% 
+  filter(!is.na(Role))
+
+match <- lang_kg %>% 
+  drop_na() %>% 
+  select(-Role) %>% 
+  unique()
+
+lang_kg <- lang_kg %>% 
+  mutate(Survey = "Kaggle",
+         lang = map_chr(lang, ~match$use[match$lang == .x]),
+         use = ifelse(is.na(use), 0, 1))
+
+df_lang <- bind_rows(lang_dh, lang_kg) %>% 
+  mutate(lang = get_language(lang)) %>% 
+  group_by(Survey, Role, lang) %>% 
+  summarise(use = mean(use)) %>% 
+  filter(Role != "Outros")
 
 
-# Gráfico de tendência do Google
-df_rl_br <- read_csv("roles_timeline_brazil.csv") %>% 
-  mutate_at(vars(-Mes), ~as.double(str_replace(.,"<1", "0.5"))) %>% 
-  mutate_at(vars(-Mes), ~zoo::rollmean(., 6, c(NA, 0, NA))) %>% 
-  pivot_longer(-Mes, names_to = "Role", values_to = "Interest")
+ggplot(df_lang %>% filter(Survey == "Data Hackers")) + 
+  geom_tile(aes(x = fct_reorder(lang, use, mean, .desc = TRUE), 
+                y = Role, 
+                fill = use)) + 
+  scale_fill_viridis_c(limits = c(0, 1)) + 
+  labs(title = "Pergunta: 'Quais linguages você usa?' - Data Hackers",
+       x = NULL, y = NULL, fill = "Proporção") +
+  theme_bw()
 
-df_rl_ww <- read_csv("roles_timeline_world.csv") %>% 
-  mutate_at(vars(-Mes), ~as.double(str_replace(.,"<1", "0.5"))) %>% 
-  mutate_at(vars(-Mes), ~zoo::rollmean(., 6, fill = c(NA, 0, NA))) %>% 
-  pivot_longer(-Mes, names_to = "Role", values_to = "Interest")
+ggsave(filename = "img/linguagens_dh.png", device = "png", width = 9, height = 4, dpi = 1200)
 
+ggplot(df_lang %>% filter(Survey == "Kaggle")) + 
+  geom_tile(aes(x = fct_reorder(lang, use, mean, .desc = TRUE), 
+                y = Role, 
+                fill = use)) + 
+  scale_fill_viridis_c(limits = c(0, 1)) + 
+  labs(title = "Pergunta: 'Quais linguages você usa?' - Kaggle",
+       x = NULL, y = NULL, fill = "Proporção") +
+  theme_bw()
+
+ggsave(filename = "img/linguagens_kg.png", device = "png", width = 9, height = 4, dpi = 1200)
+
+
+# Gráfico de tendência do Google ----
+df_rl_br <- get_google_trends_data(
+  file_path = "google_trends/roles_timeline_brazil.csv"
+  )
+
+df_rl_ww <- get_google_trends_data(
+  file_path = "google_trends/roles_timeline_world.csv"
+)
 
 ggplot(df_rl_br) + 
   geom_line(aes(x = Mes, y = Interest, 
@@ -370,7 +246,7 @@ ggplot(df_rl_br) +
        x = NULL, y = "Interesse") +
   theme_bw()
 
-ggsave(device = "png", filename = "trends_br.png", width = 10, height = 4, dpi = 1200)
+ggsave(filename = "img/trends_br.png", device = "png", width = 10, height = 4, dpi = 1200)
 
 ggplot(df_rl_ww) + 
   geom_line(aes(x = Mes, y = Interest, 
@@ -386,61 +262,4 @@ ggplot(df_rl_ww) +
        x = NULL, y = "Interesse") +
   theme_bw()
 
-ggsave(device = "png", filename = "trends_ww.png", width = 10, height = 4, dpi = 1200)
-
-
-# Linguagens Usadas
-lang_dh <- df_dh %>% 
-  mutate(Role = `('D6', 'anonymized_role')`) %>% 
-  select(Role, starts_with("('P21'")) %>% 
-  drop_na() %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]])) %>% 
-  pivot_longer(-Role, names_to = "lang", values_to = "use") %>% 
-  mutate(Survey = "Data Hackers",
-         lang = str_sub(lang, 10, str_length(lang)-2))
-
-lang_kg <- df_kg %>% 
-  mutate(Role = Q5) %>% 
-  select(Role, starts_with("Q7")) %>% 
-  pivot_longer(-Role, names_to = "lang", values_to = "use") %>% 
-  filter(!is.na(Role)) %>% 
-  mutate(Role = map_chr(Role, ~dic_role[[.x]]))
-
-match <- lang_kg %>% drop_na() %>% select(-Role) %>% unique()
-
-lang_kg <- lang_kg %>% 
-  mutate(Survey = "Kaggle",
-         lang = map_chr(lang, ~match$use[match$lang == .x]),
-         use = ifelse(is.na(use), 0, 1))
-
-df_lang <- bind_rows(lang_dh, lang_kg) %>% 
-  mutate(lang = map_chr(lang, ~dic_lang[[.x]])) %>% 
-  group_by(Survey, Role, lang) %>% 
-  summarise(use = mean(use)) %>% 
-  filter(Role != "Outros",
-         (lang %in% c("Outra", "")))
-
-
-ggplot(df_lang %>% filter(Survey == "Data Hackers")) + 
-  geom_tile(aes(x = fct_reorder(lang, use, mean, .desc = TRUE), 
-                y = Role, 
-                fill = use)) + 
-  scale_fill_viridis_c(limits = c(0, 1)) + 
-  labs(title = "Pergunta: 'Quais linguages você usa?' - Data Hackers",
-       x = NULL, y = NULL, fill = "Proporção") +
-  theme_bw()
-
-ggsave(device = "png", filename = "linguagens_dh.png", width = 7, height = 4, dpi = 1200)
-
-ggplot(df_lang %>% filter(Survey == "Kaggle")) + 
-  geom_tile(aes(x = fct_reorder(lang, use, mean, .desc = TRUE), 
-                y = Role, 
-                fill = use)) + 
-  scale_fill_viridis_c(limits = c(0, 1)) + 
-  labs(title = "Pergunta: 'Quais linguages você usa?' - Kaggle",
-       x = NULL, y = NULL, fill = "Proporção") +
-  theme_bw()
-
-ggsave(device = "png", filename = "linguagens_kg.png", width = 7, height = 4, dpi = 1200)
-
-
+ggsave(filename = "img/trends_ww.png", device = "png", width = 10, height = 4, dpi = 1200)
