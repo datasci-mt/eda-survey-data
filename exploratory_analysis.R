@@ -316,3 +316,48 @@ ggplot(df_degree_survey %>% filter(Survey == "Kaggle")) +
   theme_bw()
 
 ggsave(device = "png", filename = "formação_kg.png", width = 8, height = 4, dpi = 600)
+
+
+# Gráfico de tendência do Google
+df_rl_br <- read_csv("roles_timeline_brazil.csv") %>% 
+  mutate_at(vars(-Mes), ~as.double(str_replace(.,"<1", "0.5"))) %>% 
+  mutate_at(vars(-Mes), ~zoo::rollmean(., 6, c(NA, 0, NA))) %>% 
+  pivot_longer(-Mes, names_to = "Role", values_to = "Interest")
+
+df_rl_ww <- read_csv("roles_timeline_world.csv") %>% 
+  mutate_at(vars(-Mes), ~as.double(str_replace(.,"<1", "0.5"))) %>% 
+  mutate_at(vars(-Mes), ~zoo::rollmean(., 6, fill = c(NA, 0, NA))) %>% 
+  pivot_longer(-Mes, names_to = "Role", values_to = "Interest")
+
+
+ggplot(df_rl_br) + 
+  geom_line(aes(x = Mes, y = Interest, 
+                group = Role, color = Role), size = 0.5) + 
+  scale_x_discrete(breaks = paste0(2010:2021, "-01"), 
+                   labels = 2010:2021) + 
+  scale_color_manual(values = c("Data Scientist" = "seagreen",
+                                "Data Analyst" = "dodgerblue",
+                                "Data Engineer" = "orange",
+                                "ML Engineer" = "gray",
+                                "Business Analyst" = "firebrick")) + 
+  labs(title = "Google Trends - Brasil", color = "Cargo", 
+       x = NULL, y = "Interesse") +
+  theme_bw()
+
+ggsave(device = "png", filename = "trends_br.png", width = 10, height = 4, dpi = 1200)
+
+ggplot(df_rl_ww) + 
+  geom_line(aes(x = Mes, y = Interest, 
+                group = Role, color = Role), size = 0.5) + 
+  scale_x_discrete(breaks = paste0(2010:2021, "-01"), 
+                   labels = 2010:2021) + 
+  scale_color_manual(values = c("Data Scientist" = "seagreen",
+                                "Data Analyst" = "dodgerblue",
+                                "Data Engineer" = "orange",
+                                "ML Engineer" = "gray",
+                                "Business Analyst" = "firebrick")) + 
+  labs(title = "Google Trends - Mundo", color = "Cargo", 
+       x = NULL, y = "Interesse") +
+  theme_bw()
+
+ggsave(device = "png", filename = "trends_ww.png", width = 10, height = 4, dpi = 1200)
