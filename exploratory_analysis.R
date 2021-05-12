@@ -96,6 +96,32 @@ dic_sex <- list("Masculino" = "Masculino",
                 "Nonbinary" = "Não-binário",
                 "Não informado" = "Não informado")
 
+dic_lang <- list("sql_" = "SQL",
+                 "r" = "R",
+                 "python" = "Python",
+                 "c_c++_c#" = "C/C++/C#",
+                 "dotnet" = "DotNet",
+                 "java" = "Java",
+                 "julia" = "Julia",
+                 "sas_stata" = "SAS/Stata",
+                 "visual_basic_vba" = "VBA",
+                 "scala" = "Scala",
+                 "matlab" = "MATLAB",
+                 "php" = "PHP",
+                 "no_listed_languages" = "Outra",
+                 "Python" = "Python",
+                 "R" = "R",
+                 "SQL" = "SQL",
+                 "C" = "C",
+                 "C++" = "C++",
+                 "Java" = "Java",
+                 "Javascript" = "Javascript",
+                 "Julia" = "Julia",
+                 "Swift" = "Swift",
+                 "Bash" = "Bash",
+                 "MATLAB" = "MATLAB",
+                 "None" = "Nenhuma",
+                 "Other" = "Outra")
 
 # Cargos ocupados
 role_kg <- tibble(Survey = "Kaggle",
@@ -361,3 +387,60 @@ ggplot(df_rl_ww) +
   theme_bw()
 
 ggsave(device = "png", filename = "trends_ww.png", width = 10, height = 4, dpi = 1200)
+
+
+# Linguagens Usadas
+lang_dh <- df_dh %>% 
+  mutate(Role = `('D6', 'anonymized_role')`) %>% 
+  select(Role, starts_with("('P21'")) %>% 
+  drop_na() %>% 
+  mutate(Role = map_chr(Role, ~dic_role[[.x]])) %>% 
+  pivot_longer(-Role, names_to = "lang", values_to = "use") %>% 
+  mutate(Survey = "Data Hackers",
+         lang = str_sub(lang, 10, str_length(lang)-2))
+
+lang_kg <- df_kg %>% 
+  mutate(Role = Q5) %>% 
+  select(Role, starts_with("Q7")) %>% 
+  pivot_longer(-Role, names_to = "lang", values_to = "use") %>% 
+  filter(!is.na(Role)) %>% 
+  mutate(Role = map_chr(Role, ~dic_role[[.x]]))
+
+match <- lang_kg %>% drop_na() %>% select(-Role) %>% unique()
+
+lang_kg <- lang_kg %>% 
+  mutate(Survey = "Kaggle",
+         lang = map_chr(lang, ~match$use[match$lang == .x]),
+         use = ifelse(is.na(use), 0, 1))
+
+df_lang <- bind_rows(lang_dh, lang_kg) %>% 
+  mutate(lang = map_chr(lang, ~dic_lang[[.x]])) %>% 
+  group_by(Survey, Role, lang) %>% 
+  summarise(use = mean(use)) %>% 
+  filter(Role != "Outros",
+         (lang %in% c("Outra", "")))
+
+
+ggplot(df_lang %>% filter(Survey == "Data Hackers")) + 
+  geom_tile(aes(x = fct_reorder(lang, use, mean, .desc = TRUE), 
+                y = Role, 
+                fill = use)) + 
+  scale_fill_viridis_c(limits = c(0, 1)) + 
+  labs(title = "Pergunta: 'Quais linguages você usa?' - Data Hackers",
+       x = NULL, y = NULL, fill = "Proporção") +
+  theme_bw()
+
+ggsave(device = "png", filename = "linguagens_dh.png", width = 7, height = 4, dpi = 1200)
+
+ggplot(df_lang %>% filter(Survey == "Kaggle")) + 
+  geom_tile(aes(x = fct_reorder(lang, use, mean, .desc = TRUE), 
+                y = Role, 
+                fill = use)) + 
+  scale_fill_viridis_c(limits = c(0, 1)) + 
+  labs(title = "Pergunta: 'Quais linguages você usa?' - Kaggle",
+       x = NULL, y = NULL, fill = "Proporção") +
+  theme_bw()
+
+ggsave(device = "png", filename = "linguagens_kg.png", width = 7, height = 4, dpi = 1200)
+
+
